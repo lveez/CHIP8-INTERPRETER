@@ -48,7 +48,7 @@ void CPU::Cycle()
 // gets the opcode at the current value of the PC then updates PC
 void CPU::Fetch() 
 {
-    current_opcode = ram[registers.pc];
+    current_opcode = *reinterpret_cast<word*>(&ram[registers.pc]);
     registers.pc += 2;
 }
 
