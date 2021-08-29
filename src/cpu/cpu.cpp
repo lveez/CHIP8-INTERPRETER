@@ -3,6 +3,7 @@
 #include <time.h>
 #include <vector>
 #include <fstream>
+#include <iostream>
 
 namespace chip8
 {
@@ -24,18 +25,25 @@ void CPU::Init()
 void CPU::LoadROM(const std::string& rom_filename)
 {
     std::vector<byte> buffer;
-    buffer.reserve(0x1000);     // reserve the capacity since storage isn't an issue
-    std::ifstream rom_file(rom_filename, std::ios::binary);
-    byte current_byte;
+    std::ifstream rom_file(rom_filename, std::ios::binary | std::ios::ate);
 
-    while (rom_file.good())
+    if (!rom_file.is_open())   
     {
-        rom_file >> current_byte;
-        buffer.emplace_back(current_byte);
+        std::cout << "ROM file wasn't opened" << std::endl;
+        return;
     }
 
+    buffer.resize(rom_file.tellg());
+
+    if (buffer.empty())
+    {
+        std::cout << "ROM file is empty" << std::endl;
+    }
+
+    rom_file.seekg(0);
+    rom_file.read(reinterpret_cast<char*>(&ram[0x0200]), buffer.size());
+
     size_of_rom = buffer.size();
-    std::copy(buffer.begin(), buffer.end(), &ram[0x0200]);
 }
 
 // runs one full cycle
@@ -48,7 +56,7 @@ void CPU::Cycle()
 // gets the opcode at the current value of the PC then updates PC
 void CPU::Fetch() 
 {
-    current_opcode = *reinterpret_cast<word*>(&ram[registers.pc]);
+    current_opcode = *reinterpret_cast<word*>(ram.data() + registers.pc);
     registers.pc += 2;
 }
 
