@@ -38,6 +38,7 @@ void CPU::LoadROM(const std::string& rom_filename)
     if (buffer.empty())
     {
         std::cout << "ROM file is empty" << std::endl;
+        return;
     }
 
     rom_file.seekg(0);

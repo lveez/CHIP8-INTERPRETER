@@ -5,8 +5,6 @@
 #define private public      // this is for testing only 
 #include "../cpu/cpu.hpp"
 
-
-
 TEST_CASE("cpu ram init", "[cpu-class][init]")
 {
     chip8::cpu::CPU cpu;
