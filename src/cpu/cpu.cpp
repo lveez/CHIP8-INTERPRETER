@@ -169,6 +169,7 @@ void CPU::Decode()
 
                 case 0x0004:    // 8xy4 -> v[x] += v[y]
                 {
+                    registers.variable[0x0f] = 0;
                     byte sum = registers.variable[GetXIndex()] + registers.variable[GetYIndex()];
                     if (sum < registers.variable[GetXIndex()])
                         registers.variable[0x0f] = 1;
@@ -179,6 +180,7 @@ void CPU::Decode()
 
                 case 0x0005:    // 8xy5 -> v[x] -= v[y]
                 {
+                    registers.variable[0x0f] = 0;
                     if (registers.variable[GetXIndex()] > registers.variable[GetYIndex()])
                         registers.variable[0x0f] = 1;
 
@@ -198,6 +200,7 @@ void CPU::Decode()
 
                 case 0x0007:    // 8xy7 -> v[x] = v[y] - v[x]
                 {
+                    registers.variable[0x0f] = 0;
                     if (registers.variable[GetYIndex()] > registers.variable[GetXIndex()])
                         registers.variable[0x0f] = 1;
 
@@ -321,6 +324,7 @@ void CPU::Decode()
 
                 case 0x1e:  // fx1e -> I += v[x]
                 {
+                    registers.variable[0x0f] = 0;
                     word new_address = registers.index + registers.variable[GetXIndex()];
                     if (new_address >= 0x1000)
                     {
