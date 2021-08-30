@@ -49,7 +49,8 @@ private:    // internal components
 private:    // private data
     word current_opcode = 0;
     word    size_of_rom = 0;
-    bool     super_chip = false;
+    bool     super_chip = 0;
+    bool new_store_load = 1;
 
 public:     // constructors and destructors
     CPU();

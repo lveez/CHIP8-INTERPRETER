@@ -229,7 +229,7 @@ void CPU::Decode()
             if ((current_opcode & address_mask) >= 0x1000)
             {
                 std::cout << "attempted to load address " << (current_opcode & address_mask)
-                << " into the index register which is out of bounds";
+                << " into the index register which is out of bounds (" << current_opcode << ")" << std::endl;;
                 return;
             }
             
@@ -278,18 +278,136 @@ void CPU::Decode()
                     vram[((y + iy) * 32) + x + ix] ^= current_pixel;
                 }
             }
-
             return;
         }
 
-        case 0xe000:
+        case 0xe000:  
         {
-            
+            switch (current_opcode & byte_mask)
+            {
+                case 0x9e:  // ex9e -> skip if key v[x] is pressed
+                {
+                    if (keyboard[registers.variable[GetXIndex()]])
+                        registers.pc += 2;
+                    
+                    return;
+                }
+
+                case 0xa1:  // exa1 -> skip if key v[x] isn't pressed
+                {
+                    if (!keyboard[registers.variable[GetXIndex()]])
+                        registers.pc += 2;
+                    
+                    return;
+                }
+            }
         }
 
         case 0xf000:
         {
-            
+            switch (current_opcode & byte_mask)
+            {
+                case 0x07:  // fx07 -> v[x] = delay
+                    registers.variable[GetXIndex()] = registers.delay_timer;
+                    return;
+
+                case 0x15:  // fx15 -> delay = v[x]
+                    registers.delay_timer = registers.variable[GetXIndex()];
+                    return;
+
+                case 0x18:  // fx18 -> sound = v[x]
+                    registers.sound_timer = registers.variable[GetXIndex()];
+                    return;
+
+                case 0x1e:  // fx1e -> I += v[x]
+                {
+                    word new_address = registers.index + registers.variable[GetXIndex()];
+                    if (new_address >= 0x1000)
+                    {
+                        std::cout << "attempted to load address " << (current_opcode & address_mask)
+                        << " into the index register which is out of bounds (" << current_opcode << ")" << std::endl;
+                        registers.variable[0x0f] = 1;   // some games rely on flag being set here
+                    }
+                    registers.index = new_address;
+                    return;
+                }
+
+                case 0x0a:  // fx0a -> wait for key to be pressed and store it
+                {
+                    for (int i = 0; i < keyboard.size(); i++)
+                    {
+                        if (keyboard[i])
+                        {
+                            registers.variable[GetXIndex()] = i;
+                            return;
+                        }
+                    }
+                    registers.pc -= 2;
+                    return;
+                }
+
+                case 0x29:  // fx29 -> loads character in v[x]
+                    registers.index = registers.variable[GetXIndex()] * 5;
+                    return;
+                
+                case 0x33:  // fx33 -> bcd of v[x]
+                {
+                    byte number = registers.variable[GetXIndex()];                    
+                    std::vector<byte> buffer;
+                    
+                    int i = 0;
+                    while (number > 0)
+                    {                   
+                        buffer.push_back(number % 10);
+                        number /= 10;
+                        i++;
+                    }
+
+                    for (struct { int i; int j;} v = {buffer.size() - 1, 0}; v.i >= 0; v.i--, v.j++)
+                    {
+                        ram[registers.index + v.j] = buffer[v.i];
+                    }
+                    return;
+                }
+                
+                case 0x55:  // fx55 -> loads v[0] to v[x] into memory at I
+                {
+                    if (new_store_load)
+                    {
+                        for (int i = 0; i <= GetXIndex(); i++)
+                        {
+                            ram[registers.index + i] = registers.variable[i];
+                        }
+                        return;
+                    }
+
+                    for (int i = 0; i <= GetXIndex(); i++)
+                    {
+                        ram[registers.index] = registers.variable[i];
+                        registers.index++;
+                    }
+                    return;                    
+                }
+
+                case 0x65:  // fx65 -> loads memory at I into v[0] to v[x]
+                {
+                    if (new_store_load)
+                    {
+                        for (int i = 0; i <= GetXIndex(); i++)
+                        {
+                            registers.variable[i] = ram[registers.index + i];
+                        }
+                        return;
+                    }
+
+                    for (int i = 0; i <= GetXIndex(); i++)
+                    {
+                        registers.variable[i] = ram[registers.index];
+                        registers.index++;
+                    }
+                    return;                    
+                }
+            }
         }
     }
 }

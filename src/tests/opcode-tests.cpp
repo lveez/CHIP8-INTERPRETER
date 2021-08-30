@@ -445,4 +445,242 @@ TEST_CASE("bnnn jump off", "[cpu-class][op]")
     }
 }
 
+TEST_CASE("ex9e skip key", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    cpu.ram[0x0200] = 0xe1;
+    cpu.ram[0x0201] = 0x9e;
+    cpu.registers.variable[1] = 0;
+
+    SECTION("pressed")
+    {
+        cpu.keyboard[0] = 1;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.pc == 0x204);
+    }
+
+    SECTION("not pressed")
+    {
+        cpu.keyboard[0] = 0;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.pc == 0x202);
+    }
+}
+
+TEST_CASE("exa1 skip not key", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    cpu.ram[0x0200] = 0xe1;
+    cpu.ram[0x0201] = 0xa1;
+    cpu.registers.variable[1] = 0;
+
+    SECTION("pressed")
+    {
+        cpu.keyboard[0] = 1;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.pc == 0x202);
+    }
+
+    SECTION("not pressed")
+    {
+        cpu.keyboard[0] = 0;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.pc == 0x204);
+    }
+}
+
+TEST_CASE("fx07 v[x] = del", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    cpu.ram[0x0200] = 0xf1;
+    cpu.ram[0x0201] = 0x07;
+    cpu.registers.delay_timer = 0x12;
+    cpu.Cycle();
+
+    REQUIRE(cpu.registers.variable[1] == 0x12);
+}
+
+TEST_CASE("fx15 del = v[x]", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    cpu.ram[0x0200] = 0xf1;
+    cpu.ram[0x0201] = 0x15;
+    cpu.registers.variable[1] = 0x12;
+    cpu.Cycle();
+
+    REQUIRE(cpu.registers.delay_timer == 0x12);
+}
+
+TEST_CASE("fx18 snd = v[x]", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    cpu.ram[0x0200] = 0xf1;
+    cpu.ram[0x0201] = 0x18;
+    cpu.registers.variable[1] = 0x12;
+    cpu.Cycle();
+
+    REQUIRE(cpu.registers.sound_timer == 0x12);
+}
+
+TEST_CASE("fx1e i += v[x]", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    cpu.ram[0x0200] = 0xf1;
+    cpu.ram[0x0201] = 0x1e;
+    cpu.registers.variable[1] = 0x05;    
+
+    SECTION("no carry")
+    {   
+        cpu.registers.index = 0x0300;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.index == 0x305);
+        REQUIRE(cpu.registers.variable[0x0f] == 0);
+    }
+
+    SECTION("carry")
+    {
+        cpu.registers.index = 0x0fff;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.index == 0x1004);
+        REQUIRE(cpu.registers.variable[0x0f] == 1);
+    }
+}
+
+TEST_CASE("fx29 load char", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    cpu.ram[0x0200] = 0xf1;
+    cpu.ram[0x0201] = 0x29;
+    cpu.registers.variable[1] = 5;
+    cpu.Cycle();
+
+    REQUIRE(cpu.registers.index == 25);
+}
+
+TEST_CASE("fx33 bcd", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    cpu.ram[0x0200] = 0xf1;
+    cpu.ram[0x0201] = 0x33;
+    cpu.registers.index = 0x300;
+    
+    SECTION("1 dig")
+    {
+        cpu.registers.variable[1] = 4;
+        cpu.Cycle();
+
+        REQUIRE(cpu.ram[cpu.registers.index] == 4);
+        REQUIRE(cpu.ram[cpu.registers.index + 1] == 0);
+        REQUIRE(cpu.ram[cpu.registers.index + 2] == 0);
+    }
+
+    SECTION("2 dig")
+    {
+        cpu.registers.variable[1] = 78;
+        cpu.Cycle();
+
+        REQUIRE(cpu.ram[cpu.registers.index] == 7);
+        REQUIRE(cpu.ram[cpu.registers.index + 1] == 8);
+        REQUIRE(cpu.ram[cpu.registers.index + 2] == 0);
+    }
+
+    SECTION("3 dig")
+    {
+        cpu.registers.variable[1] = 126;
+        cpu.Cycle();
+
+        REQUIRE(cpu.ram[cpu.registers.index] == 1);
+        REQUIRE(cpu.ram[cpu.registers.index + 1] == 2);
+        REQUIRE(cpu.ram[cpu.registers.index + 2] == 6);
+    }
+}
+
+TEST_CASE("fx55 ld to ram", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    cpu.ram[0x0200] = 0xf3;
+    cpu.ram[0x0201] = 0x55;
+    cpu.registers.index = 0x0300;
+    cpu.registers.variable[0] = 0x15;
+    cpu.registers.variable[1] = 0x17;
+    cpu.registers.variable[2] = 0x93;
+    cpu.registers.variable[3] = 0x3a;
+
+    SECTION("new")
+    {
+        cpu.new_store_load = true;
+        cpu.Cycle();
+
+        REQUIRE(cpu.ram[0x0300] == 0x15);
+        REQUIRE(cpu.ram[0x0301] == 0x17);
+        REQUIRE(cpu.ram[0x0302] == 0x93);
+        REQUIRE(cpu.ram[0x0303] == 0x3a);
+        REQUIRE(cpu.registers.index == 0x0300);
+    }
+
+    SECTION("old")
+    {
+        cpu.new_store_load = false;
+        cpu.Cycle();
+
+        REQUIRE(cpu.ram[0x0300] == 0x15);
+        REQUIRE(cpu.ram[0x0301] == 0x17);
+        REQUIRE(cpu.ram[0x0302] == 0x93);
+        REQUIRE(cpu.ram[0x0303] == 0x3a);
+        REQUIRE(cpu.registers.index == 0x0304);
+    }
+}
+
+TEST_CASE("fx65 ld to reg", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    cpu.ram[0x0200] = 0xf3;
+    cpu.ram[0x0201] = 0x65;
+    cpu.registers.index = 0x0300;
+    cpu.ram[0x0300] = 0x15;
+    cpu.ram[0x0301] = 0x17;
+    cpu.ram[0x0302] = 0x93;
+    cpu.ram[0x0303] = 0x3a;
+
+    SECTION("new")
+    {
+        cpu.new_store_load = true;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.variable[0] == 0x15);
+        REQUIRE(cpu.registers.variable[1] == 0x17);
+        REQUIRE(cpu.registers.variable[2] == 0x93);
+        REQUIRE(cpu.registers.variable[3] == 0x3a);
+        REQUIRE(cpu.registers.index == 0x0300);
+    }
+
+    SECTION("old")
+    {
+        cpu.new_store_load = false;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.variable[0] == 0x15);
+        REQUIRE(cpu.registers.variable[1] == 0x17);
+        REQUIRE(cpu.registers.variable[2] == 0x93);
+        REQUIRE(cpu.registers.variable[3] == 0x3a);
+        REQUIRE(cpu.registers.index == 0x0304);
+    }
+}
+
 #pragma endregion
