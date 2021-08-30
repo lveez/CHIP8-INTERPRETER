@@ -1,5 +1,7 @@
 #include <catch2/catch.hpp>
 
+#include <iostream>
+
 #define private public      // this is for testing only 
 #include "../cpu/cpu.hpp"
 
@@ -72,5 +74,108 @@ TEST_CASE("2nnn call", "[cpu-class][op]")
     REQUIRE(cpu.stack[0] == 0x0202);
 }
 
+TEST_CASE("3xnn skip if equal const", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    SECTION("equal")
+    {
+        cpu.ram[0x0200] = 0x32;
+        cpu.ram[0x0201] = 0x10;
+        cpu.registers.variable[2] = 0x10;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.pc == 0x0204);
+    }
+
+    SECTION("not equal")
+    {
+        cpu.ram[0x0200] = 0x32;
+        cpu.ram[0x0201] = 0x10;
+        cpu.registers.variable[2] = 0x11;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.pc == 0x0202);
+    }
+}
+
+TEST_CASE("4xnn skip if not equal const", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    SECTION("equal")
+    {
+        cpu.ram[0x0200] = 0x42;
+        cpu.ram[0x0201] = 0x10;
+        cpu.registers.variable[2] = 0x10;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.pc == 0x0202);
+    }
+
+    SECTION("not equal")
+    {
+        cpu.ram[0x0200] = 0x42;
+        cpu.ram[0x0201] = 0x10;
+        cpu.registers.variable[2] = 0x11;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.pc == 0x0204);
+    }
+}
+
+TEST_CASE("5xy0 skip if equal reg", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    SECTION("equal")
+    {
+        cpu.ram[0x0200] = 0x52;
+        cpu.ram[0x0201] = 0x10;
+        cpu.registers.variable[2] = 0x10;
+        cpu.registers.variable[1] = 0x10;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.pc == 0x0204);
+    }
+
+    SECTION("not equal")
+    {
+        cpu.ram[0x0200] = 0x52;
+        cpu.ram[0x0201] = 0x10;
+        cpu.registers.variable[2] = 0x10;
+        cpu.registers.variable[1] = 0x11;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.pc == 0x0202);
+    }
+}
+
+TEST_CASE("9xy0 skip if not equal reg", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    SECTION("equal")
+    {
+        cpu.ram[0x0200] = 0x92;
+        cpu.ram[0x0201] = 0x10;
+        cpu.registers.variable[2] = 0x10;
+        cpu.registers.variable[1] = 0x10;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.pc == 0x0202);
+    }
+
+    SECTION("not equal")
+    {
+        cpu.ram[0x0200] = 0x92;
+        cpu.ram[0x0201] = 0x10;
+        cpu.registers.variable[2] = 0x10;
+        cpu.registers.variable[1] = 0x11;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.pc == 0x0204);
+    }
+}
 
 #pragma endregion

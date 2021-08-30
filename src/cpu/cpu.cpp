@@ -114,19 +114,25 @@ void CPU::Decode()
             return;
         }
 
-        case 0x3000:
+        case 0x3000:    // 3xnn -> skip next instruction if v[x] == nn
         {
-
+            if (registers.variable[GetXIndex()] == (current_opcode & byte_mask))
+                registers.pc += 2;
+            return;
         }
 
-        case 0x4000:
+        case 0x4000:    // 4xnn -> skip next instruction if v[x] != nn
         {
-            
+            if (registers.variable[GetXIndex()] != (current_opcode & byte_mask))
+                registers.pc += 2;
+            return;
         }
 
-        case 0x5000:
+        case 0x5000:    // 5xy0 -> skip next instruction if v[x] == v[y]
         {
-            
+            if (registers.variable[GetXIndex()] == registers.variable[GetYIndex()])
+                registers.pc += 2;
+            return;
         }
 
         case 0x6000:
@@ -144,9 +150,11 @@ void CPU::Decode()
             
         }
 
-        case 0x9000:
+        case 0x9000:    // 9xy0 -> skip next instruction if v[x] != v[y]
         {
-            
+            if (registers.variable[GetXIndex()] != registers.variable[GetYIndex()])
+                registers.pc += 2;
+            return;
         }
 
         case 0xa000:
@@ -185,6 +193,18 @@ void CPU::Decode()
 void CPU::LoadFont()
 {
     std::copy(fontset.begin(), fontset.end(), ram.data());
+}
+
+// ?x?? isolates x to get the reg_variable index
+byte CPU::GetXIndex() const
+{
+    return (current_opcode & x_reg_mask) >> 8;
+}
+
+// ??y? isolates y to get the reg_variable index
+byte CPU::GetYIndex() const
+{
+    return (current_opcode & y_reg_mask) >> 4;
 }
 
 // pushes current value of pc to stack

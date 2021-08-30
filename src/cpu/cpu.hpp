@@ -65,6 +65,8 @@ private:    // private functions
     void Fetch();
     void Decode();
     void LoadFont();
+    byte GetXIndex() const;
+    byte GetYIndex() const;
     void Push();
     void Pop();
     

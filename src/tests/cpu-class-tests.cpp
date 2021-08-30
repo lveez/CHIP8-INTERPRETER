@@ -109,4 +109,37 @@ TEST_CASE("cpu loadrom", "[cpu-class][func]")
     }
 }
 
+TEST_CASE("cpu getxindex / getyindex", "[cpu-class][func]")
+{
+    chip8::cpu::CPU cpu;
+
+    cpu.current_opcode = 0x2345;
+
+    REQUIRE(cpu.GetXIndex() == 3);
+    REQUIRE(cpu.GetYIndex() == 4);
+}
+
+TEST_CASE("cpu push / pop", "[cpu-class][func]")
+{
+    chip8::cpu::CPU cpu;
+
+    SECTION("push")
+    {
+        cpu.Push();
+
+        REQUIRE(cpu.stack[0] == 0x0200);
+        REQUIRE(cpu.registers.stack_pointer == 1);
+    }
+
+    SECTION("pop")
+    {
+        cpu.stack[0] = 0x0305;
+        cpu.registers.stack_pointer = 1;
+        cpu.Pop();
+
+        REQUIRE(cpu.registers.pc == 0x305);
+        REQUIRE(cpu.registers.stack_pointer == 0);
+    }
+}
+
 #pragma endregion
