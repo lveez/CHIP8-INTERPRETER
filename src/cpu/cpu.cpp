@@ -66,7 +66,92 @@ void CPU::Decode()
 {
     switch (current_opcode & opcode_mask)
     {
+        case 0x0000:
+        {
+            switch (current_opcode & byte_mask)
+            {
+                case 0x00e0:    //  00e0 -> clear screen
+                    std::fill(vram.begin(), vram.end(), 0);
 
+                case 0x00ee:    // 00ee -> return from subroutine
+                    Pop();
+            }
+        }
+        
+        case 0x1000:
+        {
+
+        }
+
+        case 0x2000:
+        {
+
+        }
+
+        case 0x3000:
+        {
+
+        }
+
+        case 0x4000:
+        {
+            
+        }
+
+        case 0x5000:
+        {
+            
+        }
+
+        case 0x6000:
+        {
+            
+        }
+
+        case 0x7000:
+        {
+            
+        }
+
+        case 0x8000:
+        {
+            
+        }
+
+        case 0x9000:
+        {
+            
+        }
+
+        case 0xa000:
+        {
+            
+        }
+
+        case 0xb000:
+        {
+            
+        }
+
+        case 0xc000:
+        {
+            
+        }
+
+        case 0xd000:
+        {
+            
+        }
+
+        case 0xe000:
+        {
+            
+        }
+
+        case 0xf000:
+        {
+            
+        }
     }
 }
 
@@ -74,6 +159,13 @@ void CPU::Decode()
 void CPU::LoadFont()
 {
     std::copy(fontset.begin(), fontset.end(), ram.data());
+}
+
+// pops address from stack loads into pc
+void CPU::Pop()
+{
+    registers.stack_pointer--;
+    registers.pc = stack[registers.stack_pointer];
 }
 
 };

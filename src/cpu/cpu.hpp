@@ -65,6 +65,7 @@ private:    // private functions
     void Fetch();
     void Decode();
     void LoadFont();
+    void Pop();
     
 private:    //fontset
     const std::array<byte, 80> fontset =

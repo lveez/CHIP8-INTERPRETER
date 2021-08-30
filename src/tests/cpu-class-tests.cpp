@@ -5,6 +5,8 @@
 #define private public      // this is for testing only 
 #include "../cpu/cpu.hpp"
 
+#pragma region init
+
 TEST_CASE("cpu ram init", "[cpu-class][init]")
 {
     chip8::cpu::CPU cpu;
@@ -67,6 +69,10 @@ TEST_CASE("cpu class data init", "[cpu-class][init]")
     REQUIRE(cpu.size_of_rom == 0);
 }
 
+#pragma endregion
+
+#pragma region func
+
 TEST_CASE("cpu fetch", "[cpu-class][func]")
 {
     chip8::cpu::CPU cpu;
@@ -102,3 +108,11 @@ TEST_CASE("cpu loadrom", "[cpu-class][func]")
         REQUIRE(int(cpu.ram[0x0200 + i]) == int(rom[i]));
     }
 }
+
+#pragma endregion
+
+#pragma region op
+
+TEST_CASE("")
+
+#pragma endregion
