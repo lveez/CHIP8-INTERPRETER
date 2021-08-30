@@ -410,4 +410,39 @@ TEST_CASE("8xye shr", "[cpu-class][op]")
     }
 }
 
+TEST_CASE("annn ld i", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    cpu.ram[0x0200] = 0xa4;
+    cpu.ram[0x0201] = 0xbc;
+    cpu.Cycle();
+
+    REQUIRE(cpu.registers.index == 0x04bc);
+}
+
+TEST_CASE("bnnn jump off", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+    cpu.ram[0x0200] = 0xb4;
+    cpu.ram[0x0201] = 0xc3;
+    
+    SECTION("basic")
+    {
+        cpu.registers.variable[0] = 0x05;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.pc == 0x04c8);
+    }
+
+    SECTION("super_chip")
+    {
+        cpu.registers.variable[4] = 0x02;
+        cpu.super_chip = true;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.pc == 0x04c5);
+    }
+}
+
 #pragma endregion

@@ -224,19 +224,30 @@ void CPU::Decode()
             return;
         }
 
-        case 0xa000:
+        case 0xa000:    // annn -> I = nnn
         {
+            if ((current_opcode & address_mask) >= 0x1000)
+            {
+                std::cout << "attempted to load address " << (current_opcode & address_mask)
+                << " into the index register which is out of bounds";
+                return;
+            }
             
+            registers.index = current_opcode & address_mask;
         }
 
-        case 0xb000:
+        case 0xb000:    // bnnn -> pc = nn + v[0]
         {
-            
+            if (super_chip)
+                registers.pc = (current_opcode & address_mask) + registers.variable[GetXIndex()];
+            else
+                registers.pc = (current_opcode & address_mask) + registers.variable[0];
+            return;
         }
 
-        case 0xc000:
+        case 0xc000:    // cxnn -> rng
         {
-            
+            registers.variable[GetXIndex()] = rand() & (current_opcode & byte_mask);
         }
 
         case 0xd000:
