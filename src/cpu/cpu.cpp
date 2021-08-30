@@ -135,14 +135,16 @@ void CPU::Decode()
             return;
         }
 
-        case 0x6000:
-        {
-            
+        case 0x6000:    // 6xnn -> v[x] = nn
+        {   
+            registers.variable[GetXIndex()] = (current_opcode & byte_mask);
+            return;
         }
 
-        case 0x7000:
+        case 0x7000:    // 7xnn -> v[x] += nn
         {
-            
+            registers.variable[GetXIndex()] += (current_opcode & byte_mask);     
+            return;
         }
 
         case 0x8000:

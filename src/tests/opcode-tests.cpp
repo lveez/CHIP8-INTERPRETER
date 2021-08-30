@@ -178,4 +178,27 @@ TEST_CASE("9xy0 skip if not equal reg", "[cpu-class][op]")
     }
 }
 
+TEST_CASE("6xnn set", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    cpu.ram[0x0200] = 0x61;
+    cpu.ram[0x0201] = 0x12;
+    cpu.Cycle();
+
+    REQUIRE(cpu.registers.variable[1] == 0x12);
+}
+
+TEST_CASE("7xnn add", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    cpu.registers.variable[1] = 0x02;
+    cpu.ram[0x0200] = 0x71;
+    cpu.ram[0x0201] = 0x12;
+    cpu.Cycle();
+
+    REQUIRE(cpu.registers.variable[1] == 0x14);
+}
+
 #pragma endregion
