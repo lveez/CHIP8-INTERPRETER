@@ -250,9 +250,36 @@ void CPU::Decode()
             registers.variable[GetXIndex()] = rand() & (current_opcode & byte_mask);
         }
 
-        case 0xd000:
+        case 0xd000:    // dxyn -> draw on screen ---- needs tested
         {
+            byte height = current_opcode & nibble_mask;
+            byte x = registers.variable[GetXIndex()] % 64;
+            byte y = registers.variable[GetYIndex()] % 32;
+            byte current_byte;
+            byte current_pixel;
+            registers.variable[0x0f] = 0;
             
+            for (int iy = 0; iy < height; iy++)
+            {
+                if ((y + iy) > 31)
+                    break;
+
+                current_byte = ram[registers.index];
+
+                for (int ix = 0; ix < 8; ix++)
+                {
+                    if ((x + ix) > 63)
+                        break;
+
+                    current_pixel = current_byte >> (7 - ix) & 1;
+                    if (vram[((y + iy) * 32) + x + ix] && current_pixel)
+                        registers.variable[0x0f] = 1;
+                    
+                    vram[((y + iy) * 32) + x + ix] ^= current_pixel;
+                }
+            }
+
+            return;
         }
 
         case 0xe000:
