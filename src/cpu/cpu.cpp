@@ -77,20 +77,41 @@ void CPU::Decode()
             {
                 case 0x00e0:    //  00e0 -> clear screen
                     std::fill(vram.begin(), vram.end(), 0);
+                    return;
 
                 case 0x00ee:    // 00ee -> return from subroutine
                     Pop();
+                    return;
+
+                default:
+                    std::cout << "unknown opcode -- " << current_opcode << std::endl;
+                    return;
             }
         }
         
-        case 0x1000:
+        case 0x1000:    // 1nnn -> jump to address nnn 
         {
-
+            if ((current_opcode & address_mask) >= 0x1000)
+            {
+                std::cout << "attempted to jump to address " << (current_opcode & address_mask) 
+                << " which is out of bounds" << std::endl;
+                return;
+            } 
+            registers.pc = current_opcode & address_mask;
+            return;
         }
 
-        case 0x2000:
+        case 0x2000:    // 2nnn -> call subroutine at address nnn
         {
-
+            if ((current_opcode & address_mask) >= 0x1000)
+            {
+                std::cout << "attempted to call subroutine at address " << (current_opcode & address_mask)
+                << " which is out of bounds";
+                return;
+            }
+            Push();
+            registers.pc = current_opcode & address_mask;
+            return;
         }
 
         case 0x3000:
@@ -164,6 +185,13 @@ void CPU::Decode()
 void CPU::LoadFont()
 {
     std::copy(fontset.begin(), fontset.end(), ram.data());
+}
+
+// pushes current value of pc to stack
+void CPU::Push()
+{
+    stack[registers.stack_pointer] = registers.pc;
+    registers.stack_pointer++;
 }
 
 // pops address from stack loads into pc

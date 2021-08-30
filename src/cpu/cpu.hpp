@@ -65,6 +65,7 @@ private:    // private functions
     void Fetch();
     void Decode();
     void LoadFont();
+    void Push();
     void Pop();
     
 private:    //fontset
