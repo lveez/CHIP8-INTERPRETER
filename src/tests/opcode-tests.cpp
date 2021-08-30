@@ -201,4 +201,213 @@ TEST_CASE("7xnn add", "[cpu-class][op]")
     REQUIRE(cpu.registers.variable[1] == 0x14);
 }
 
+TEST_CASE("8xy0 set reg", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    cpu.registers.variable[2] = (rand() % 255) + 1;
+    cpu.ram[0x0200] = 0x81;
+    cpu.ram[0x0201] = 0x20;
+    cpu.Cycle();
+
+    REQUIRE(cpu.registers.variable[2] != 0);
+    REQUIRE(cpu.registers.variable[1] == cpu.registers.variable[2]);
+}
+
+TEST_CASE("8xy1 or reg", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    chip8::cpu::byte x = (rand() % 256);
+    cpu.registers.variable[2] = (rand() % 256);
+    cpu.registers.variable[1] = x;
+    cpu.ram[0x0200] = 0x81;
+    cpu.ram[0x0201] = 0x21;
+    cpu.Cycle();
+
+    REQUIRE(cpu.registers.variable[1] == (x | cpu.registers.variable[2]));
+}
+
+TEST_CASE("8xy2 and reg", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    chip8::cpu::byte x = (rand() % 256);
+    cpu.registers.variable[2] = (rand() % 256);
+    cpu.registers.variable[1] = x;
+    cpu.ram[0x0200] = 0x81;
+    cpu.ram[0x0201] = 0x22;
+    cpu.Cycle();
+
+    REQUIRE(cpu.registers.variable[1] == (x & cpu.registers.variable[2]));
+}
+
+TEST_CASE("8xy3 xor reg", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    chip8::cpu::byte x = (rand() % 256);
+    cpu.registers.variable[2] = (rand() % 256);
+    cpu.registers.variable[1] = x;
+    cpu.ram[0x0200] = 0x81;
+    cpu.ram[0x0201] = 0x23;
+    cpu.Cycle();
+
+    REQUIRE(cpu.registers.variable[1] == (x ^ cpu.registers.variable[2]));
+}
+
+TEST_CASE("8xy4 add reg", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    SECTION("add")
+    {
+        cpu.registers.variable[1] = 0x11;
+        cpu.registers.variable[2] = 0x05;
+        cpu.ram[0x0200] = 0x81;
+        cpu.ram[0x0201] = 0x24;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.variable[1] == 0x16);
+    }
+
+    SECTION("carry")
+    {
+        cpu.registers.variable[1] = 0xff;
+        cpu.registers.variable[2] = 0x05;
+        cpu.ram[0x0200] = 0x81;
+        cpu.ram[0x0201] = 0x24;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.variable[1] == 0x04);
+        REQUIRE(cpu.registers.variable[0x0f] == 1);
+    }
+}
+
+TEST_CASE("8xy5 sub reg", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    SECTION("sub")
+    {
+        cpu.registers.variable[1] = 0x16;
+        cpu.registers.variable[2] = 0x05;
+        cpu.ram[0x0200] = 0x81;
+        cpu.ram[0x0201] = 0x25;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.variable[1] == 0x11);
+        REQUIRE(cpu.registers.variable[0x0f] == 1);
+    }
+
+    SECTION("carry")
+    {
+        cpu.registers.variable[1] = 0x01;
+        cpu.registers.variable[2] = 0x02;
+        cpu.ram[0x0200] = 0x81;
+        cpu.ram[0x0201] = 0x25;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.variable[1] == 0xff);
+        REQUIRE(cpu.registers.variable[0x0f] == 0);
+    }
+}
+
+TEST_CASE("8xy7 sub reg rev", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    SECTION("sub")
+    {
+        cpu.registers.variable[1] = 0x05;
+        cpu.registers.variable[2] = 0x16;
+        cpu.ram[0x0200] = 0x81;
+        cpu.ram[0x0201] = 0x27;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.variable[1] == 0x11);
+        REQUIRE(cpu.registers.variable[0x0f] == 1);
+    }
+
+    SECTION("carry")
+    {
+        cpu.registers.variable[1] = 0x02;
+        cpu.registers.variable[2] = 0x01;
+        cpu.ram[0x0200] = 0x81;
+        cpu.ram[0x0201] = 0x27;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.variable[1] == 0xff);
+        REQUIRE(cpu.registers.variable[0x0f] == 0);
+    }
+}
+
+TEST_CASE("8xy6 shr", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    cpu.ram[0x0200] = 0x81;
+    cpu.ram[0x0201] = 0x26;
+
+    SECTION("basic")
+    {
+        cpu.registers.variable[1] = 4;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.variable[1] == 2);
+    }
+
+    SECTION("super_chip")
+    {
+        cpu.super_chip = true;
+        cpu.registers.variable[2] = 4;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.variable[1] == 2);
+    }
+
+    SECTION("flag")
+    {
+        cpu.registers.variable[1] = 3;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.variable[1] == 1);
+        REQUIRE(cpu.registers.variable[0x0f] == 1);
+    }
+}
+
+TEST_CASE("8xye shr", "[cpu-class][op]")
+{
+    chip8::cpu::CPU cpu;
+
+    cpu.ram[0x0200] = 0x81;
+    cpu.ram[0x0201] = 0x2e;
+
+    SECTION("basic")
+    {
+        cpu.registers.variable[1] = 4;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.variable[1] == 8);
+    }
+
+    SECTION("super_chip")
+    {
+        cpu.super_chip = true;
+        cpu.registers.variable[2] = 4;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.variable[1] == 8);
+    }
+
+    SECTION("flag")
+    {
+        cpu.registers.variable[1] = 129;
+        cpu.Cycle();
+
+        REQUIRE(cpu.registers.variable[1] == 2);
+        REQUIRE(cpu.registers.variable[0x0f] == 1);
+    }
+}
+
 #pragma endregion

@@ -149,7 +149,72 @@ void CPU::Decode()
 
         case 0x8000:
         {
-            
+            switch (current_opcode & nibble_mask)
+            {
+                case 0x0000:    // 8xy0 -> v[x] = v[y]
+                    registers.variable[GetXIndex()] = registers.variable[GetYIndex()];
+                    return;
+
+                case 0x0001:    // 8xy1 -> v[x] |= v[y]
+                    registers.variable[GetXIndex()] |= registers.variable[GetYIndex()];
+                    return;
+
+                case 0x0002:    // 8xy2 -> v[x] &= v[y]
+                    registers.variable[GetXIndex()] &= registers.variable[GetYIndex()];
+                    return;
+
+                case 0x0003:    // 8xy3 -> v[x] ^= v[y]
+                    registers.variable[GetXIndex()] ^= registers.variable[GetYIndex()];
+                    return;
+
+                case 0x0004:    // 8xy4 -> v[x] += v[y]
+                {
+                    byte sum = registers.variable[GetXIndex()] + registers.variable[GetYIndex()];
+                    if (sum < registers.variable[GetXIndex()])
+                        registers.variable[0x0f] = 1;
+
+                    registers.variable[GetXIndex()] = sum;
+                    return;
+                }
+
+                case 0x0005:    // 8xy5 -> v[x] -= v[y]
+                {
+                    if (registers.variable[GetXIndex()] > registers.variable[GetYIndex()])
+                        registers.variable[0x0f] = 1;
+
+                    registers.variable[GetXIndex()] -= registers.variable[GetYIndex()];
+                    return;
+                }
+
+                case 0x0006:    // 8xy6 -> v[x] >> 1
+                {
+                    if (super_chip)
+                        registers.variable[GetXIndex()] = registers.variable[GetYIndex()];
+                    
+                    registers.variable[0x0f] = (registers.variable[GetXIndex()] & 1);                     
+                    registers.variable[GetXIndex()] = registers.variable[GetXIndex()] >> 1;
+                    return;
+                }
+
+                case 0x0007:    // 8xy7 -> v[x] = v[y] - v[x]
+                {
+                    if (registers.variable[GetYIndex()] > registers.variable[GetXIndex()])
+                        registers.variable[0x0f] = 1;
+
+                    registers.variable[GetXIndex()] = registers.variable[GetYIndex()] - registers.variable[GetXIndex()];
+                    return;
+                }
+
+                case 0x000e:    // 8xye -> v[x] << 1
+                {
+                    if (super_chip)
+                        registers.variable[GetXIndex()] = registers.variable[GetYIndex()];
+                    
+                    registers.variable[0x0f] = (registers.variable[GetXIndex()] & 128) >> 7;                     
+                    registers.variable[GetXIndex()] = registers.variable[GetXIndex()] << 1;
+                    return;
+                }
+            }
         }
 
         case 0x9000:    // 9xy0 -> skip next instruction if v[x] != v[y]
