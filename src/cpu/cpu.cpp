@@ -57,7 +57,12 @@ void CPU::Cycle()
 // gets the opcode at the current value of the PC then updates PC
 void CPU::Fetch() 
 {
-    current_opcode = *reinterpret_cast<word*>(ram.data() + registers.pc);
+    // to preserve endian-ness
+    byte high_byte = ram[registers.pc];
+    byte low_byte = ram[registers.pc + 1];
+
+    current_opcode = (high_byte << 8) | low_byte;
+    
     registers.pc += 2;
 }
 
