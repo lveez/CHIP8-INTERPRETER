@@ -5,7 +5,7 @@ namespace chip8
 namespace graphics
 {
 
-Window::Window(std::string window_title, DWORD style, POINT location, int width, int height, WNDCLASSEX window_class = { 0 }, WNDPROC WindowProc = nullptr)
+Window::Window(std::string window_title, DWORD style, POINT location, int width, int height, WNDCLASSEX window_class, WNDPROC WindowProc)
 {
     if (!window_class.cbSize)
         window_class = default_class;
